@@ -1,0 +1,8 @@
+name = "xeqt-practice-platform"
+compatibility_date = "2024-01-01"
+
+[site]
+bucket = "./"
+
+# Cloudflare Pages config
+# Deploy via: wrangler pages deploy . --project-name xeqt-practice-platform

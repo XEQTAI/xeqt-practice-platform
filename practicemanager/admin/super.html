@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Super Admin — XEQT Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#b8935a;--gold-l:#d4aa72;--gold-d:#9a7a48;
+  --ink:#0a0805;--ink2:#130f0a;--ink3:#1c1610;
+  --surface:rgba(255,255,255,.06);--surface2:rgba(255,255,255,.10);
+  --border:rgba(255,255,255,.10);--border-gold:rgba(184,147,90,.22);--border-gold-hi:rgba(184,147,90,.5);
+  --text-primary:#f0ebe0;--text-secondary:#d4c8a8;--text-muted:#a09070;--text-faint:#6a5e48;
+  --radius:10px;--radius-lg:16px;
+  --green:#4ade80;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;
+}
+html{height:100%}
+body{background:var(--ink);color:var(--text-primary);font-family:'Jost',sans-serif;font-weight:400;line-height:1.6;min-height:100%;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1000;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");opacity:.35;}
+
+/* ── LAYOUT ── */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:240px;flex-shrink:0;background:var(--ink2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:100;}
+.sb-brand{padding:24px 20px;border-bottom:1px solid var(--border);}
+.sb-brand-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--gold-l);letter-spacing:.08em}
+.sb-brand-tag{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);margin-top:3px;}
+.sb-admin-badge{margin-top:8px;display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:50px;background:rgba(184,147,90,.1);border:1px solid var(--border-gold);font-size:10px;letter-spacing:.1em;color:var(--gold-l);}
+.sb-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);color:var(--text-muted);font-size:13px;cursor:pointer;transition:all .2s;border:none;background:none;width:100%;text-align:left;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-item:hover{background:var(--surface);color:var(--text-secondary)}
+.nav-item.active{background:rgba(184,147,90,.12);color:var(--gold-l);border:1px solid var(--border-gold)}
+.sb-footer{padding:16px 20px;border-top:1px solid var(--border);}
+.sb-footer-user{font-size:12px;color:var(--text-muted);margin-bottom:8px;}
+.sb-logout{background:none;border:1px solid var(--border);color:var(--text-faint);padding:7px 14px;border-radius:50px;font-size:11px;cursor:pointer;letter-spacing:.06em;transition:all .2s;width:100%;}
+.sb-logout:hover{border-color:var(--border-gold);color:var(--gold-l)}
+
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;}
+.topbar{padding:18px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(10,8,5,.6);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text-primary);}
+.topbar-actions{display:flex;align-items:center;gap:12px;}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:50px;font-size:11px;letter-spacing:.08em;}
+.badge-green{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);color:var(--green);}
+.badge-amber{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:var(--amber);}
+.badge-red{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);}
+.badge-gold{background:rgba(184,147,90,.1);border:1px solid var(--border-gold);color:var(--gold-l);}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+.content{padding:32px;flex:1;}
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── STATS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 24px;}
+.stat-card.highlight{border-color:var(--border-gold);background:rgba(184,147,90,.06);}
+.stat-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin-bottom:10px;}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;color:var(--text-primary);line-height:1;}
+.stat-sub{font-size:12px;color:var(--text-muted);margin-top:6px;}
+
+/* ── PRACTICE CARDS ── */
+.practices-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.practice-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;transition:border-color .2s,transform .15s;position:relative;overflow:hidden;}
+.practice-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold-d),transparent);opacity:0;transition:opacity .3s;}
+.practice-card:hover{border-color:var(--border-gold);transform:translateY(-2px);}
+.practice-card:hover::before{opacity:1;}
+.pc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.pc-name{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:400;color:var(--text-primary);}
+.pc-slug{font-size:11px;color:var(--text-faint);margin-top:2px;font-family:monospace;}
+.pc-status{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:50px;font-size:10px;letter-spacing:.08em;}
+.pc-status.active{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);color:var(--green);}
+.pc-status.inactive{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);}
+.pc-info{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.pc-info-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-muted);}
+.pc-info-row svg{width:13px;height:13px;flex-shrink:0;color:var(--text-faint);}
+.pc-clinicians{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+.pc-clinician-tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:50px;font-size:10px;background:rgba(184,147,90,.08);border:1px solid var(--border-gold);color:var(--gold-l);}
+.pc-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ── BUTTONS ── */
+.btn{padding:8px 18px;border-radius:50px;font-family:'Jost',sans-serif;font-size:12px;font-weight:500;letter-spacing:.04em;cursor:pointer;border:none;transition:all .2s;}
+.btn-gold{background:var(--gold);color:var(--ink);}
+.btn-gold:hover{background:var(--gold-l);}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text-muted);}
+.btn-outline:hover{border-color:var(--border-gold);color:var(--gold-l);}
+.btn-danger{background:none;border:1px solid rgba(248,113,113,.3);color:var(--red);}
+.btn-danger:hover{background:rgba(248,113,113,.1);}
+.btn-lg{padding:12px 28px;font-size:13px;}
+
+/* ── SECTION HEADER ── */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.section-hdr h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text-primary);}
+
+/* ── TABLE ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px;}
+.table-wrap table{width:100%;border-collapse:collapse;}
+.table-wrap thead th{padding:12px 16px;text-align:left;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);border-bottom:1px solid var(--border);font-weight:500;}
+.table-wrap tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;}
+.table-wrap tbody tr:last-child{border-bottom:none;}
+.table-wrap tbody tr:hover{background:rgba(184,147,90,.05);}
+.table-wrap tbody td{padding:13px 16px;font-size:13px;color:var(--text-secondary);}
+.table-wrap tbody td.name{color:var(--text-primary);font-weight:500;}
+
+/* ── MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--ink2);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:40px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative;}
+.modal-box::-webkit-scrollbar{width:3px;}
+.modal-box::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text-faint);cursor:pointer;font-size:20px;line-height:1;padding:4px 8px;border-radius:6px;transition:color .2s;}
+.modal-close:hover{color:var(--gold-l);}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:var(--text-primary);margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--text-muted);margin-bottom:28px;}
+.form-field{margin-bottom:16px;}
+.form-field label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:7px;}
+.form-field input,.form-field select,.form-field textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text-primary);font-family:'Jost',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--gold);}
+.form-field select option{background:var(--ink2);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.modal-actions{display:flex;gap:10px;margin-top:24px;justify-content:flex-end;}
+
+/* ── ACTIVITY LOG ── */
+.log-list{display:flex;flex-direction:column;gap:0;}
+.log-item{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.log-item:last-child{border-bottom:none;}
+.log-dot{width:8px;height:8px;border-radius:50%;background:var(--gold-d);flex-shrink:0;margin-top:6px;}
+.log-body{flex:1;}
+.log-text{font-size:13px;color:var(--text-secondary);}
+.log-time{font-size:11px;color:var(--text-faint);margin-top:2px;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .main{margin-left:0;}
+  .content{padding:20px;}
+  .field-row{grid-template-columns:1fr;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-brand">
+      <div class="sb-brand-logo">XEQT</div>
+      <div class="sb-brand-tag">Platform Console</div>
+      <div class="sb-admin-badge">⚡ Super Admin</div>
+    </div>
+    <nav class="sb-nav">
+      <button class="nav-item active" data-screen="dashboard" onclick="switchScreen('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-screen="practices" onclick="switchScreen('practices',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M9 21V7l6-4v18"/><path d="M9 12h6"/></svg>
+        Practices
+        <span class="badge badge-gold" style="margin-left:auto;padding:2px 7px;font-size:10px;" id="practice-count-badge">0</span>
+      </button>
+      <button class="nav-item" data-screen="patients" onclick="switchScreen('patients',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        All Patients
+      </button>
+      <button class="nav-item" data-screen="activity" onclick="switchScreen('activity',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Activity
+      </button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-footer-user">XEQT Super Admin</div>
+      <button class="sb-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Platform Dashboard</div>
+      <div class="topbar-actions">
+        <span class="badge badge-green"><span class="badge-dot"></span> Platform Online</span>
+        <button class="btn btn-gold btn-lg" onclick="openAddPractice()">+ Add Practice</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── DASHBOARD SCREEN ── -->
+      <div class="screen active" id="screen-dashboard">
+        <div class="stat-grid">
+          <div class="stat-card highlight">
+            <div class="stat-label">Practices</div>
+            <div class="stat-value" id="s-practices">0</div>
+            <div class="stat-sub">Active on platform</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Patients</div>
+            <div class="stat-value" id="s-patients">0</div>
+            <div class="stat-sub">Across all practices</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Review</div>
+            <div class="stat-value" id="s-pending">0</div>
+            <div class="stat-sub">Needs attention</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">MRR</div>
+            <div class="stat-value" id="s-mrr">R0</div>
+            <div class="stat-sub">Monthly recurring</div>
+          </div>
+        </div>
+
+        <div class="section-hdr">
+          <h2>Active Practices</h2>
+          <button class="btn btn-outline" onclick="switchScreen('practices',document.querySelector('[data-screen=practices]'))">View All</button>
+        </div>
+        <div class="practices-grid" id="dash-practices-grid"></div>
+      </div>
+
+      <!-- ── PRACTICES SCREEN ── -->
+      <div class="screen" id="screen-practices">
+        <div class="section-hdr">
+          <h2>All Practices</h2>
+          <button class="btn btn-gold" onclick="openAddPractice()">+ Add Practice</button>
+        </div>
+        <div class="practices-grid" id="all-practices-grid"></div>
+      </div>
+
+      <!-- ── ALL PATIENTS SCREEN ── -->
+      <div class="screen" id="screen-patients">
+        <div class="section-hdr">
+          <h2>All Patients</h2>
+          <span class="badge badge-gold" id="all-patients-count">0 total</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Practice</th>
+                <th>Clinician</th>
+                <th>Submitted</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="all-patients-body">
+              <tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-faint);">No patients yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── ACTIVITY SCREEN ── -->
+      <div class="screen" id="screen-activity">
+        <div class="section-hdr">
+          <h2>Platform Activity</h2>
+        </div>
+        <div class="table-wrap" style="padding:24px;">
+          <div class="log-list" id="activity-log">
+            <div class="log-item">
+              <div class="log-dot" style="background:var(--green)"></div>
+              <div class="log-body">
+                <div class="log-text">Platform initialized — XEQT Practice Manager online</div>
+                <div class="log-time">Just now</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- ── ADD PRACTICE MODAL ── -->
+<div class="modal-overlay" id="add-practice-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Add New Practice</div>
+    <div class="modal-sub">Configure a new practice on the XEQT platform</div>
+
+    <div class="field-row">
+      <div class="form-field">
+        <label>Practice Name *</label>
+        <input type="text" id="np-name" placeholder="e.g. Snyman Periodontics"/>
+      </div>
+      <div class="form-field">
+        <label>Subdomain Slug *</label>
+        <input type="text" id="np-slug" placeholder="e.g. drisnyman" oninput="slugify()"/>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="form-field">
+        <label>Practice Type</label>
+        <select id="np-type">
+          <option>Specialist</option>
+          <option>Dental</option>
+          <option>Medical GP</option>
+          <option>Oral Hygiene</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Status</label>
+        <select id="np-status">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="form-field">
+        <label>Email</label>
+        <input type="email" id="np-email" placeholder="info@practice.co.za"/>
+      </div>
+      <div class="form-field">
+        <label>Phone</label>
+        <input type="tel" id="np-phone" placeholder="+27 12 000 0000"/>
+      </div>
+    </div>
+    <div class="form-field">
+      <label>Google Sheet ID (optional)</label>
+      <input type="text" id="np-sheet" placeholder="Paste Sheet ID"/>
+    </div>
+
+    <div style="margin-top:8px;padding:14px;background:rgba(184,147,90,.06);border:1px solid var(--border-gold);border-radius:var(--radius);">
+      <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Admin Credentials</div>
+      <div class="field-row">
+        <div class="form-field" style="margin-bottom:0">
+          <label>Username</label>
+          <input type="text" id="np-username" placeholder="e.g. drisnyman"/>
+        </div>
+        <div class="form-field" style="margin-bottom:0">
+          <label>Password</label>
+          <input type="text" id="np-password" placeholder="e.g. Practice2026"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-gold btn-lg" onclick="savePractice()">Create Practice</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+let practices = [];
+const PRICE_PER_PRACTICE = 1125;
+
+async function init() {
+  // Auth
+  const session = sessionStorage.getItem('xeqt_session');
+  if (!session) { window.location.href = '../../index.html'; return; }
+  const sess = JSON.parse(session);
+  if (!sess.isSuper) { window.location.href = 'dashboard.html'; return; }
+
+  document.querySelector('.sb-footer-user').textContent = sess.name || 'Super Admin';
+
+  await loadPractices();
+  renderAll();
+}
+
+async function loadPractices() {
+  try {
+    const res = await fetch('../../../public/practices.json');
+    const data = await res.json();
+    practices = data.practices || [];
+  } catch(e) {
+    practices = JSON.parse(localStorage.getItem('xeqt_practices') || '[]');
+  }
+}
+
+function getAllPatients() {
+  let all = [];
+  practices.forEach(p => {
+    const key = `xeqt_patients_${p.slug}`;
+    const pts = JSON.parse(localStorage.getItem(key) || '[]');
+    pts.forEach(pt => { pt._practiceName = p.name; pt._practiceSlug = p.slug; });
+    all = all.concat(pts);
+  });
+  return all;
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+function renderAll() {
+  const allPts = getAllPatients();
+  const pending = allPts.filter(p=>p.status==='new'||p.status==='pending').length;
+
+  document.getElementById('s-practices').textContent = practices.filter(p=>p.status==='active').length;
+  document.getElementById('s-patients').textContent = allPts.length;
+  document.getElementById('s-pending').textContent = pending;
+  document.getElementById('s-mrr').textContent = `R${(practices.filter(p=>p.status==='active').length * PRICE_PER_PRACTICE).toLocaleString()}`;
+  document.getElementById('practice-count-badge').textContent = practices.length;
+
+  renderPracticeGrid('dash-practices-grid', practices.slice(0,6));
+  renderPracticeGrid('all-practices-grid', practices);
+  renderAllPatients(allPts);
+}
+
+function renderPracticeGrid(id, list) {
+  const el = document.getElementById(id);
+  if (!list.length) {
+    el.innerHTML = '<p style="color:var(--text-faint);grid-column:1/-1;">No practices yet. Add your first one.</p>';
+    return;
+  }
+  el.innerHTML = list.map(p => {
+    const pts = JSON.parse(localStorage.getItem(`xeqt_patients_${p.slug}`) || '[]');
+    const pending = pts.filter(x=>x.status==='new'||x.status==='pending').length;
+    const clinicians = (p.clinicians||[]).map(c=>`<span class="pc-clinician-tag">${c.name}</span>`).join('');
+    return `
+    <div class="practice-card">
+      <div class="pc-header">
+        <div>
+          <div class="pc-name">${p.name}</div>
+          <div class="pc-slug">${p.slug}.xeqt.co.za</div>
+        </div>
+        <span class="pc-status ${p.status}">${p.status}</span>
+      </div>
+      <div class="pc-info">
+        <div class="pc-info-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8l7.89 5.26a2 2 0 0 0 2.22 0L21 8M5 19h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"/></svg>
+          ${p.email || '—'}
+        </div>
+        <div class="pc-info-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          ${p.phone || '—'}
+        </div>
+        <div class="pc-info-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          ${pts.length} patients · ${pending > 0 ? `<span style="color:var(--amber)">${pending} pending</span>` : '0 pending'}
+        </div>
+      </div>
+      ${clinicians ? `<div class="pc-clinicians">${clinicians}</div>` : ''}
+      <div class="pc-actions">
+        <button class="btn btn-gold" onclick="impersonate('${p.slug}')">Open Dashboard</button>
+        <button class="btn btn-outline" onclick="copyLink('${p.slug}')">Copy Link</button>
+        <button class="btn btn-danger" onclick="toggleStatus('${p.slug}')">
+          ${p.status==='active'?'Disable':'Activate'}
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderAllPatients(list) {
+  const tbody = document.getElementById('all-patients-body');
+  document.getElementById('all-patients-count').textContent = `${list.length} total`;
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:40px;text-align:center;color:var(--text-faint);">No patients yet</td></tr>';
+    return;
+  }
+  const sorted = [...list].sort((a,b)=>new Date(b.submitted)-new Date(a.submitted));
+  const statusBadge = s => {
+    const m = {new:'badge-blue',pending:'badge-amber',approved:'badge-green',booked:'badge-gold',declined:'badge-red'};
+    const l = {new:'New',pending:'Pending',approved:'Approved',booked:'Booked',declined:'Declined'};
+    return `<span class="badge ${m[s]||'badge-blue'}" style="font-size:10px;padding:2px 8px;">${l[s]||s}</span>`;
+  };
+  tbody.innerHTML = sorted.map(p=>`
+    <tr>
+      <td class="name">${p.firstName||''} ${p.lastName||''}</td>
+      <td style="color:var(--text-muted)">${p._practiceName||'—'}</td>
+      <td style="font-size:12px;color:var(--text-faint)">${p.clinician||'—'}</td>
+      <td style="font-size:12px;color:var(--text-faint)">${p.submitted?new Date(p.submitted).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'}):'—'}</td>
+      <td>${statusBadge(p.status)}</td>
+    </tr>
+  `).join('');
+}
+
+// ── PRACTICE ACTIONS ──────────────────────────────────────────────────────
+function impersonate(slug) {
+  const p = practices.find(x=>x.slug===slug);
+  if (!p) return;
+  sessionStorage.setItem('xeqt_session', JSON.stringify({
+    slug: p.slug,
+    username: p.adminUsername,
+    name: p.adminUsername,
+    isSuper: false,
+    practice: p
+  }));
+  window.location.href = 'dashboard.html';
+}
+
+function copyLink(slug) {
+  const url = `https://${slug}.xeqt.co.za`;
+  navigator.clipboard.writeText(url).then(()=>showToast('Link copied!'));
+}
+
+function toggleStatus(slug) {
+  const p = practices.find(x=>x.slug===slug);
+  if (!p) return;
+  p.status = p.status === 'active' ? 'inactive' : 'active';
+  savePracticesLocal();
+  renderAll();
+  logActivity(`Practice "${p.name}" ${p.status==='active'?'activated':'disabled'}`);
+}
+
+// ── ADD PRACTICE ──────────────────────────────────────────────────────────
+function openAddPractice() {
+  document.getElementById('add-practice-modal').classList.add('open');
+  document.getElementById('np-name').focus();
+}
+
+function closeModal() {
+  document.getElementById('add-practice-modal').classList.remove('open');
+  ['np-name','np-slug','np-email','np-phone','np-sheet','np-username','np-password'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+}
+
+function slugify() {
+  const name = document.getElementById('np-name').value;
+  const slug = document.getElementById('np-slug');
+  if (!slug.dataset.manual) {
+    slug.value = name.toLowerCase().replace(/[^a-z0-9]/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'');
+  }
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('np-slug').addEventListener('input',()=>{
+    document.getElementById('np-slug').dataset.manual = '1';
+  });
+});
+
+function savePractice() {
+  const name = document.getElementById('np-name').value.trim();
+  const slug = document.getElementById('np-slug').value.trim().toLowerCase();
+  if (!name || !slug) { showToast('Name and slug are required'); return; }
+  if (practices.find(p=>p.slug===slug)) { showToast('Slug already exists'); return; }
+
+  const p = {
+    id: slug,
+    slug,
+    name,
+    subdomain: slug,
+    status: document.getElementById('np-status').value,
+    type: document.getElementById('np-type').value,
+    email: document.getElementById('np-email').value.trim(),
+    phone: document.getElementById('np-phone').value.trim(),
+    googleSheetId: document.getElementById('np-sheet').value.trim(),
+    googleSheetUrl: '',
+    adminUsername: document.getElementById('np-username').value.trim() || slug,
+    adminPasswordHash: document.getElementById('np-password').value.trim() || 'Practice2026',
+    clinicians: [],
+    createdAt: new Date().toISOString().split('T')[0],
+    notes: ''
+  };
+
+  practices.push(p);
+  savePracticesLocal();
+  closeModal();
+  renderAll();
+  logActivity(`New practice added: "${p.name}" (${slug}.xeqt.co.za)`);
+  showToast(`Practice "${p.name}" created`);
+}
+
+function savePracticesLocal() {
+  localStorage.setItem('xeqt_practices', JSON.stringify(practices));
+}
+
+// ── ACTIVITY ──────────────────────────────────────────────────────────────
+const activityLog = [];
+function logActivity(text) {
+  activityLog.unshift({text, time: new Date()});
+  const el = document.getElementById('activity-log');
+  el.innerHTML = activityLog.map(a=>`
+    <div class="log-item">
+      <div class="log-dot" style="background:var(--green)"></div>
+      <div class="log-body">
+        <div class="log-text">${a.text}</div>
+        <div class="log-time">${a.time.toLocaleTimeString('en-ZA')}</div>
+      </div>
+    </div>
+  `).join('') + `<div class="log-item"><div class="log-dot"></div><div class="log-body"><div class="log-text">Platform initialized — XEQT Practice Manager online</div><div class="log-time">Session start</div></div></div>`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────
+function switchScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const titles = {dashboard:'Platform Dashboard',practices:'All Practices',patients:'All Patients',activity:'Platform Activity'};
+  document.getElementById('topbar-title').textContent = titles[name]||name;
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function logout() {
+  sessionStorage.removeItem('xeqt_session');
+  window.location.href = '../../index.html';
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style,{position:'fixed',bottom:'24px',left:'50%',transform:'translateX(-50%)',background:'var(--gold)',color:'var(--ink)',padding:'10px 20px',borderRadius:'50px',fontSize:'13px',fontWeight:'600',zIndex:'9999',boxShadow:'0 8px 24px rgba(184,147,90,.4)',letterSpacing:'.04em'});
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+document.getElementById('add-practice-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('add-practice-modal')) closeModal();
+});
+
+init();
+</script>
+</body>
+</html>

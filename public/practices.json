@@ -1,0 +1,38 @@
+{
+  "practices": [
+    {
+      "id": "drisnyman",
+      "slug": "drisnyman",
+      "name": "Snyman Periodontics",
+      "subdomain": "drisnyman",
+      "status": "active",
+      "type": "Specialist",
+      "email": "info@snymanperiodontics.co.za",
+      "phone": "+27 12 000 0000",
+      "googleSheetId": "",
+      "googleSheetUrl": "",
+      "adminUsername": "drisnyman",
+      "adminPasswordHash": "test",
+      "clinicians": [
+        {
+          "id": "inus",
+          "name": "Dr Inus Snyman",
+          "role": "Specialist in Periodontics & Oral Medicine",
+          "qualifications": "BChD (UP) | PGDipDent Oral Surgery\nPDD & PGDipDent Implantology\nMChD (UP) | FCD(SA) OMP",
+          "formFile": "patient-form.html",
+          "active": true
+        },
+        {
+          "id": "caitlin",
+          "name": "Caitlin Taute",
+          "role": "Oral Hygienist — Periodontal Care",
+          "qualifications": "Dip Oral Hygiene (UP)\nExpanded Functions (UWC)",
+          "formFile": "caitlin-taute-intake.html",
+          "active": true
+        }
+      ],
+      "createdAt": "2026-04-24",
+      "notes": ""
+    }
+  ]
+}

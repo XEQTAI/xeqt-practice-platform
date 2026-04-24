@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Practice Dashboard — XEQT</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold:#b8935a;--gold-l:#d4aa72;--gold-d:#9a7a48;
+  --ink:#0a0805;--ink2:#130f0a;--ink3:#1c1610;
+  --surface:rgba(255,255,255,.06);--surface2:rgba(255,255,255,.10);
+  --border:rgba(255,255,255,.10);--border-gold:rgba(184,147,90,.22);--border-gold-hi:rgba(184,147,90,.5);
+  --text-primary:#f0ebe0;--text-secondary:#d4c8a8;--text-muted:#a09070;--text-faint:#6a5e48;
+  --radius:10px;--radius-lg:16px;
+  --green:#4ade80;--amber:#fbbf24;--red:#f87171;--blue:#60a5fa;
+}
+html{height:100%}
+body{background:var(--ink);color:var(--text-primary);font-family:'Jost',sans-serif;font-weight:400;line-height:1.6;min-height:100%;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:1000;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");opacity:.35;}
+
+/* ── SIDEBAR ── */
+.layout{display:flex;min-height:100vh}
+.sidebar{width:240px;flex-shrink:0;background:var(--ink2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:100;}
+.sb-brand{padding:24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-brand-logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:500;color:var(--gold-l);letter-spacing:.08em}
+.sb-brand-tag{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);}
+.sb-practice{padding:16px 20px;border-bottom:1px solid var(--border);}
+.sb-practice-name{font-size:13px;font-weight:500;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-practice-type{font-size:11px;color:var(--text-faint);margin-top:2px;}
+.sb-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);color:var(--text-muted);font-size:13px;cursor:pointer;transition:all .2s;border:none;background:none;width:100%;text-align:left;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0}
+.nav-item:hover{background:var(--surface);color:var(--text-secondary)}
+.nav-item.active{background:rgba(184,147,90,.12);color:var(--gold-l);border:1px solid var(--border-gold)}
+.sb-footer{padding:16px 20px;border-top:1px solid var(--border);}
+.sb-footer-user{font-size:12px;color:var(--text-muted);margin-bottom:8px;}
+.sb-logout{background:none;border:1px solid var(--border);color:var(--text-faint);padding:7px 14px;border-radius:50px;font-size:11px;cursor:pointer;letter-spacing:.06em;transition:all .2s;width:100%;}
+.sb-logout:hover{border-color:var(--border-gold);color:var(--gold-l)}
+
+/* ── MAIN ── */
+.main{margin-left:240px;flex:1;display:flex;flex-direction:column;}
+.topbar{padding:18px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(10,8,5,.6);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;}
+.topbar-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text-primary);}
+.topbar-actions{display:flex;align-items:center;gap:12px;}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:50px;font-size:11px;letter-spacing:.08em;}
+.badge-green{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);color:var(--green);}
+.badge-amber{background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.25);color:var(--amber);}
+.badge-red{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);color:var(--red);}
+.badge-blue{background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.25);color:var(--blue);}
+.badge-gold{background:rgba(184,147,90,.1);border:1px solid var(--border-gold);color:var(--gold-l);}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+.content{padding:32px;flex:1;}
+
+/* ── SCREENS ── */
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── STAT CARDS ── */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px 24px;}
+.stat-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin-bottom:10px;}
+.stat-value{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:300;color:var(--text-primary);line-height:1;}
+.stat-sub{font-size:12px;color:var(--text-muted);margin-top:6px;}
+.stat-card.highlight{border-color:var(--border-gold);background:rgba(184,147,90,.06);}
+
+/* ── SECTION HEADER ── */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.section-hdr h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:400;color:var(--text-primary);}
+.section-hdr-actions{display:flex;gap:10px;align-items:center;}
+
+/* ── SEARCH / FILTER ── */
+.search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.search-input{flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text-primary);font-family:'Jost',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.search-input:focus{border-color:var(--border-gold);}
+.search-input::placeholder{color:var(--text-faint);}
+.filter-select{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text-muted);font-family:'Jost',sans-serif;font-size:13px;outline:none;cursor:pointer;}
+.filter-select option{background:var(--ink2);}
+
+/* ── PATIENT TABLE ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+.table-wrap table{width:100%;border-collapse:collapse;}
+.table-wrap thead th{padding:12px 16px;text-align:left;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);border-bottom:1px solid var(--border);font-weight:500;}
+.table-wrap tbody tr{border-bottom:1px solid rgba(255,255,255,.04);transition:background .15s;cursor:pointer;}
+.table-wrap tbody tr:last-child{border-bottom:none;}
+.table-wrap tbody tr:hover{background:rgba(184,147,90,.05);}
+.table-wrap tbody td{padding:14px 16px;font-size:13px;color:var(--text-secondary);}
+.table-wrap tbody td.name{color:var(--text-primary);font-weight:500;}
+.empty-state{padding:60px 20px;text-align:center;color:var(--text-faint);font-size:14px;}
+.empty-state svg{width:40px;height:40px;margin:0 auto 16px;opacity:.3;display:block;}
+
+/* ── CLINICIAN BADGE ── */
+.clinician-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:50px;font-size:11px;background:rgba(184,147,90,.1);border:1px solid var(--border-gold);color:var(--gold-l);}
+
+/* ── PATIENT DETAIL PANEL ── */
+.detail-panel{position:fixed;top:0;right:0;bottom:0;width:480px;background:var(--ink2);border-left:1px solid var(--border-gold);z-index:200;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;}
+.detail-panel.open{transform:translateX(0);}
+.dp-header{padding:24px 24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;}
+.dp-close{background:none;border:none;color:var(--text-faint);cursor:pointer;padding:4px;border-radius:6px;transition:color .2s;}
+.dp-close:hover{color:var(--gold-l);}
+.dp-close svg{width:18px;height:18px;}
+.dp-name{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:400;color:var(--text-primary);margin-bottom:6px;}
+.dp-meta{font-size:12px;color:var(--text-muted);}
+.dp-body{flex:1;overflow-y:auto;padding:24px;}
+.dp-body::-webkit-scrollbar{width:3px;}
+.dp-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.dp-section{margin-bottom:24px;}
+.dp-section-title{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;}
+.dp-field{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:12px;}
+.dp-field:last-child{border-bottom:none;}
+.dp-field label{font-size:12px;color:var(--text-faint);flex-shrink:0;max-width:140px;}
+.dp-field span{font-size:13px;color:var(--text-secondary);text-align:right;}
+.dp-notes{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text-secondary);font-family:'Jost',sans-serif;font-size:13px;width:100%;min-height:80px;outline:none;resize:vertical;transition:border-color .2s;line-height:1.6;}
+.dp-notes:focus{border-color:var(--gold);}
+.dp-footer{padding:20px 24px;border-top:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 20px;border-radius:50px;font-family:'Jost',sans-serif;font-size:13px;font-weight:500;letter-spacing:.04em;cursor:pointer;border:none;transition:all .2s;}
+.btn-gold{background:var(--gold);color:var(--ink);}
+.btn-gold:hover{background:var(--gold-l);}
+.btn-outline{background:none;border:1px solid var(--border);color:var(--text-muted);}
+.btn-outline:hover{border-color:var(--border-gold);color:var(--gold-l);}
+.btn-sm{padding:6px 14px;font-size:12px;}
+.btn-danger{background:none;border:1px solid rgba(248,113,113,.3);color:var(--red);}
+.btn-danger:hover{background:rgba(248,113,113,.1);}
+
+/* ── STATUS SELECT ── */
+.status-select{background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:5px 12px;color:var(--text-secondary);font-family:'Jost',sans-serif;font-size:12px;outline:none;cursor:pointer;transition:border-color .2s;}
+.status-select:focus{border-color:var(--border-gold);}
+.status-select option{background:var(--ink2);}
+
+/* ── CLINICIANS SCREEN ── */
+.clinician-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;}
+.clinician-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;transition:border-color .2s;}
+.clinician-card:hover{border-color:var(--border-gold);}
+.cc-avatar{width:52px;height:52px;border-radius:50%;background:rgba(184,147,90,.1);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;color:var(--gold-l);font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;margin-bottom:16px;}
+.cc-name{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text-primary);margin-bottom:4px;}
+.cc-role{font-size:12px;color:var(--gold-l);margin-bottom:12px;}
+.cc-qual{font-size:12px;color:var(--text-faint);line-height:1.6;margin-bottom:16px;white-space:pre-line;}
+.cc-stats{display:flex;gap:20px;}
+.cc-stat{text-align:center;}
+.cc-stat-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:300;color:var(--text-primary);}
+.cc-stat-lbl{font-size:10px;color:var(--text-faint);letter-spacing:.08em;}
+
+/* ── SETTINGS ── */
+.settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;margin-bottom:20px;}
+.settings-card h3{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:400;color:var(--text-primary);margin-bottom:16px;}
+.form-field{margin-bottom:16px;}
+.form-field label{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:8px;}
+.form-field input,.form-field select,.form-field textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text-primary);font-family:'Jost',sans-serif;font-size:13px;outline:none;transition:border-color .2s;}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--gold);}
+.form-field select option{background:var(--ink2);}
+
+/* ── OVERLAY ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:190;display:none;}
+.overlay.open{display:block;}
+
+/* ── CONFIRM MODAL ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:300;display:none;align-items:center;justify-content:center;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--ink2);border:1px solid var(--border-gold);border-radius:var(--radius-lg);padding:32px;max-width:380px;width:90%;text-align:center;}
+.modal-icon{width:44px;height:44px;border-radius:50%;background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;color:var(--red);}
+.modal-icon svg{width:20px;height:20px;}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:400;color:var(--text-primary);margin-bottom:8px;}
+.modal p{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:24px;}
+.modal-actions{display:flex;gap:10px;justify-content:center;}
+.modal-note{font-size:11px;color:var(--text-faint);margin-top:14px;letter-spacing:.04em;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .3s;}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;}
+  .content{padding:20px;}
+  .detail-panel{width:100%;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div>
+        <div class="sb-brand-logo">XEQT</div>
+        <div class="sb-brand-tag">Practice Platform</div>
+      </div>
+    </div>
+    <div class="sb-practice" id="sb-practice">
+      <div class="sb-practice-name" id="sb-practice-name">Loading…</div>
+      <div class="sb-practice-type" id="sb-practice-type"></div>
+    </div>
+    <nav class="sb-nav">
+      <button class="nav-item active" data-screen="overview" onclick="switchScreen('overview',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Overview
+      </button>
+      <button class="nav-item" data-screen="patients" onclick="switchScreen('patients',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Patients
+        <span class="badge badge-amber" style="margin-left:auto;padding:2px 7px;font-size:10px;" id="pending-count-badge">0</span>
+      </button>
+      <button class="nav-item" data-screen="clinicians" onclick="switchScreen('clinicians',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/><path d="M12 12v2m0 4h.01"/></svg>
+        Clinicians
+      </button>
+      <button class="nav-item" data-screen="settings" onclick="switchScreen('settings',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-footer-user" id="sb-user">—</div>
+      <button class="sb-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Overview</div>
+      <div class="topbar-actions">
+        <span class="badge badge-green"><span class="badge-dot"></span> Active</span>
+        <span class="badge badge-gold" id="topbar-date"></span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── OVERVIEW SCREEN ── -->
+      <div class="screen active" id="screen-overview">
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card highlight">
+            <div class="stat-label">Total Patients</div>
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-sub">All time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Review</div>
+            <div class="stat-value" id="stat-pending">0</div>
+            <div class="stat-sub">Awaiting approval</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Approved</div>
+            <div class="stat-value" id="stat-approved">0</div>
+            <div class="stat-sub">Cleared to book</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">This Month</div>
+            <div class="stat-value" id="stat-month">0</div>
+            <div class="stat-sub">New onboardings</div>
+          </div>
+        </div>
+
+        <div class="section-hdr">
+          <h2>Recent Patients</h2>
+          <button class="btn btn-outline btn-sm" onclick="switchScreen('patients',document.querySelector('[data-screen=patients]'))">View All</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Clinician</th>
+                <th>Submitted</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="recent-table-body">
+              <tr><td colspan="4" class="empty-state">No patients yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── PATIENTS SCREEN ── -->
+      <div class="screen" id="screen-patients">
+        <div class="search-bar">
+          <input class="search-input" type="text" id="patient-search" placeholder="Search by name, email…" oninput="filterPatients()"/>
+          <select class="filter-select" id="patient-status-filter" onchange="filterPatients()">
+            <option value="">All Statuses</option>
+            <option value="new">New</option>
+            <option value="pending">Pending Review</option>
+            <option value="approved">Approved</option>
+            <option value="booked">Booked</option>
+            <option value="declined">Declined</option>
+          </select>
+          <select class="filter-select" id="patient-clinician-filter" onchange="filterPatients()">
+            <option value="">All Clinicians</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Patient</th>
+                <th>Contact</th>
+                <th>Clinician</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="patients-table-body">
+              <tr><td colspan="6"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>No patients yet. They'll appear here as forms are submitted.</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── CLINICIANS SCREEN ── -->
+      <div class="screen" id="screen-clinicians">
+        <div class="clinician-grid" id="clinician-grid"></div>
+      </div>
+
+      <!-- ── SETTINGS SCREEN ── -->
+      <div class="screen" id="screen-settings">
+        <div class="settings-card">
+          <h3>Practice Information</h3>
+          <div class="form-field">
+            <label>Practice Name</label>
+            <input type="text" id="set-name" readonly/>
+          </div>
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" id="set-email" readonly/>
+          </div>
+          <div class="form-field">
+            <label>Phone</label>
+            <input type="tel" id="set-phone" readonly/>
+          </div>
+          <div class="form-field">
+            <label>Practice Type</label>
+            <input type="text" id="set-type" readonly/>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h3>Google Sheets Integration</h3>
+          <div class="form-field">
+            <label>Google Sheet ID</label>
+            <input type="text" id="set-sheet-id" placeholder="Paste your Google Sheet ID here"/>
+          </div>
+          <div class="form-field">
+            <label>Sheet URL</label>
+            <input type="url" id="set-sheet-url" placeholder="https://docs.google.com/spreadsheets/d/…"/>
+          </div>
+          <button class="btn btn-gold" onclick="saveSheetSettings()">Save Integration</button>
+          <button class="btn btn-outline" id="open-sheet-btn" style="margin-left:8px;" onclick="openSheet()">Open Sheet</button>
+        </div>
+        <div class="settings-card">
+          <h3>Patient Onboarding Link</h3>
+          <div class="form-field">
+            <label>Your Practice URL</label>
+            <input type="text" id="set-onboarding-url" readonly/>
+          </div>
+          <button class="btn btn-outline" onclick="copyOnboardingUrl()">Copy Link</button>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div>
+
+<!-- ── PATIENT DETAIL PANEL ── -->
+<div class="detail-panel" id="detail-panel">
+  <div class="dp-header">
+    <div>
+      <div class="dp-name" id="dp-name">—</div>
+      <div class="dp-meta" id="dp-meta">—</div>
+    </div>
+    <button class="dp-close" onclick="closePanel()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="dp-body">
+    <div class="dp-section">
+      <div class="dp-section-title">Status</div>
+      <select class="status-select" id="dp-status" onchange="updateStatus()">
+        <option value="new">New</option>
+        <option value="pending">Pending Review</option>
+        <option value="approved">Approved</option>
+        <option value="booked">Booked</option>
+        <option value="declined">Declined</option>
+      </select>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Patient Details</div>
+      <div id="dp-fields"></div>
+    </div>
+    <div class="dp-section">
+      <div class="dp-section-title">Notes</div>
+      <textarea class="dp-notes" id="dp-notes" placeholder="Add internal notes…" onblur="saveNote()"></textarea>
+    </div>
+  </div>
+  <div class="dp-footer">
+    <button class="btn btn-gold btn-sm" onclick="approvePatient()">Approve</button>
+    <button class="btn btn-outline btn-sm" onclick="markBooked()">Mark Booked</button>
+    <button class="btn btn-danger btn-sm" onclick="declinePatient()">Decline</button>
+    <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="confirmDeletePatient()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:13px;height:13px;display:inline;vertical-align:-1px;margin-right:4px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      Delete
+    </button>
+  </div>
+</div>
+
+<!-- ── DELETE CONFIRM MODAL ── -->
+<div class="modal-backdrop" id="delete-modal">
+  <div class="modal">
+    <div class="modal-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    </div>
+    <h3>Delete Client</h3>
+    <p>This will remove <strong id="delete-modal-name" style="color:var(--text-primary)"></strong> from the active patient list.<br>Their record will be moved to your Archived sheet.</p>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="executeDeletePatient()">Yes, Archive &amp; Delete</button>
+    </div>
+    <div class="modal-note">This action can be undone by viewing your Archived sheet</div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const PRACTICES_URL = '../../../public/practices.json';
+let practice = null;
+let patients = [];
+let currentPatientId = null;
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+async function init() {
+  // Auth check
+  const session = sessionStorage.getItem('xeqt_session');
+  if (!session) { window.location.href = '../../index.html'; return; }
+  const sess = JSON.parse(session);
+
+  // Date badge
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('en-ZA', {day:'numeric',month:'short',year:'numeric'});
+
+  // Load practices
+  try {
+    const res = await fetch(PRACTICES_URL);
+    const data = await res.json();
+    practice = data.practices.find(p => p.slug === sess.slug);
+  } catch(e) {
+    // Fallback: use session data
+    practice = sess.practice;
+  }
+
+  if (!practice) { alert('Practice not found.'); logout(); return; }
+
+  // Populate sidebar
+  document.getElementById('sb-practice-name').textContent = practice.name;
+  document.getElementById('sb-practice-type').textContent = practice.type || 'Practice';
+  document.getElementById('sb-user').textContent = sess.name || sess.username;
+
+  // Load patients from localStorage
+  loadPatients();
+
+  // Render
+  renderStats();
+  renderRecentTable();
+  renderClinicians();
+  renderSettings();
+  populateClinicianFilter();
+}
+
+// ── PATIENTS ──────────────────────────────────────────────────────────────
+function loadPatients() {
+  const key = `xeqt_patients_${practice.slug}`;
+  patients = JSON.parse(localStorage.getItem(key) || '[]');
+}
+
+function savePatients() {
+  const key = `xeqt_patients_${practice.slug}`;
+  localStorage.setItem(key, JSON.stringify(patients));
+}
+
+function addSamplePatients() {
+  // Only add if empty (for demo purposes)
+  if (patients.length > 0) return;
+  const now = new Date();
+  const samples = [
+    {id:'p1',firstName:'Marlize',lastName:'van der Berg',email:'marlize@email.co.za',phone:'+27 82 111 2222',clinician:'inus',status:'new',submitted:new Date(now-86400000*2).toISOString(),notes:''},
+    {id:'p2',firstName:'Johan',lastName:'Pieterse',email:'johan.p@gmail.com',phone:'+27 71 333 4444',clinician:'caitlin',status:'pending',submitted:new Date(now-86400000*5).toISOString(),notes:'Referred by Dr Smith'},
+    {id:'p3',firstName:'Anri',lastName:'Botha',email:'anri.botha@work.co.za',phone:'+27 83 555 6666',clinician:'inus',status:'approved',submitted:new Date(now-86400000*8).toISOString(),notes:''},
+  ];
+  patients = samples;
+  savePatients();
+}
+
+// ── STATS ──────────────────────────────────────────────────────────────────
+function renderStats() {
+  addSamplePatients();
+  const total = patients.length;
+  const pending = patients.filter(p=>p.status==='new'||p.status==='pending').length;
+  const approved = patients.filter(p=>p.status==='approved'||p.status==='booked').length;
+  const thisMonth = patients.filter(p=>{
+    const d = new Date(p.submitted);
+    const n = new Date();
+    return d.getMonth()===n.getMonth()&&d.getFullYear()===n.getFullYear();
+  }).length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-month').textContent = thisMonth;
+  document.getElementById('pending-count-badge').textContent = pending;
+}
+
+// ── TABLES ────────────────────────────────────────────────────────────────
+function statusBadge(status) {
+  const map = {
+    'new':'badge-blue','pending':'badge-amber','approved':'badge-green',
+    'booked':'badge-gold','declined':'badge-red'
+  };
+  const labels = {new:'New',pending:'Pending',approved:'Approved',booked:'Booked',declined:'Declined'};
+  return `<span class="badge ${map[status]||'badge-blue'}">${labels[status]||status}</span>`;
+}
+
+function clinicianName(id) {
+  if (!practice || !practice.clinicians) return id;
+  const c = practice.clinicians.find(c=>c.id===id);
+  return c ? c.name : id;
+}
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('en-ZA',{day:'numeric',month:'short',year:'numeric'});
+}
+
+function renderRecentTable() {
+  const tbody = document.getElementById('recent-table-body');
+  const recent = [...patients].sort((a,b)=>new Date(b.submitted)-new Date(a.submitted)).slice(0,5);
+  if (!recent.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No patients yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = recent.map(p=>`
+    <tr onclick="openPanel('${p.id}')">
+      <td class="name">${p.firstName} ${p.lastName}</td>
+      <td><span class="clinician-tag">${clinicianName(p.clinician)}</span></td>
+      <td>${formatDate(p.submitted)}</td>
+      <td>${statusBadge(p.status)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderPatientsTable(list) {
+  const tbody = document.getElementById('patients-table-body');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>No patients match your filter.</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(p=>`
+    <tr onclick="openPanel('${p.id}')">
+      <td class="name">${p.firstName} ${p.lastName}</td>
+      <td style="color:var(--text-muted);font-size:12px;">${p.email||'—'}</td>
+      <td><span class="clinician-tag">${clinicianName(p.clinician)}</span></td>
+      <td>${formatDate(p.submitted)}</td>
+      <td>${statusBadge(p.status)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();openPanel('${p.id}')">View</button></td>
+    </tr>
+  `).join('');
+}
+
+function filterPatients() {
+  const q = document.getElementById('patient-search').value.toLowerCase();
+  const sf = document.getElementById('patient-status-filter').value;
+  const cf = document.getElementById('patient-clinician-filter').value;
+  let list = patients;
+  if (q) list = list.filter(p=>(p.firstName+' '+p.lastName+' '+p.email).toLowerCase().includes(q));
+  if (sf) list = list.filter(p=>p.status===sf);
+  if (cf) list = list.filter(p=>p.clinician===cf);
+  list = [...list].sort((a,b)=>new Date(b.submitted)-new Date(a.submitted));
+  renderPatientsTable(list);
+}
+
+function populateClinicianFilter() {
+  if (!practice?.clinicians) return;
+  const sel = document.getElementById('patient-clinician-filter');
+  practice.clinicians.forEach(c=>{
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+}
+
+// ── CLINICIANS ─────────────────────────────────────────────────────────────
+function renderClinicians() {
+  const grid = document.getElementById('clinician-grid');
+  if (!practice?.clinicians?.length) {
+    grid.innerHTML = '<p style="color:var(--text-faint)">No clinicians configured.</p>';
+    return;
+  }
+  grid.innerHTML = practice.clinicians.map(c=>{
+    const count = patients.filter(p=>p.clinician===c.id).length;
+    const pending = patients.filter(p=>p.clinician===c.id&&(p.status==='new'||p.status==='pending')).length;
+    const initials = c.name.split(' ').map(w=>w[0]).join('').slice(0,2);
+    return `
+    <div class="clinician-card">
+      <div class="cc-avatar">${initials}</div>
+      <div class="cc-name">${c.name}</div>
+      <div class="cc-role">${c.role}</div>
+      <div class="cc-qual">${c.qualifications||''}</div>
+      <div class="cc-stats">
+        <div class="cc-stat"><div class="cc-stat-val">${count}</div><div class="cc-stat-lbl">Total</div></div>
+        <div class="cc-stat"><div class="cc-stat-val">${pending}</div><div class="cc-stat-lbl">Pending</div></div>
+        <div class="cc-stat"><div class="cc-stat-val">${c.active?'Active':'Inactive'}</div><div class="cc-stat-lbl">Status</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────
+function renderSettings() {
+  document.getElementById('set-name').value = practice.name || '';
+  document.getElementById('set-email').value = practice.email || '';
+  document.getElementById('set-phone').value = practice.phone || '';
+  document.getElementById('set-type').value = practice.type || '';
+  document.getElementById('set-sheet-id').value = practice.googleSheetId || '';
+  document.getElementById('set-sheet-url').value = practice.googleSheetUrl || '';
+  const origin = window.location.origin;
+  document.getElementById('set-onboarding-url').value = `${origin}/template/?practice=${practice.slug}`;
+}
+
+function saveSheetSettings() {
+  const key = `xeqt_settings_${practice.slug}`;
+  const settings = {
+    googleSheetId: document.getElementById('set-sheet-id').value,
+    googleSheetUrl: document.getElementById('set-sheet-url').value,
+  };
+  localStorage.setItem(key, JSON.stringify(settings));
+  showToast('Integration settings saved');
+}
+
+function openSheet() {
+  const url = document.getElementById('set-sheet-url').value;
+  if (url) window.open(url,'_blank');
+  else showToast('No Google Sheet URL set');
+}
+
+function copyOnboardingUrl() {
+  const url = document.getElementById('set-onboarding-url').value;
+  navigator.clipboard.writeText(url).then(()=>showToast('Link copied!'));
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────────────────────
+function openPanel(id) {
+  currentPatientId = id;
+  const p = patients.find(x=>x.id===id);
+  if (!p) return;
+  document.getElementById('dp-name').textContent = `${p.firstName} ${p.lastName}`;
+  document.getElementById('dp-meta').textContent = `${p.email || ''} · ${p.phone || ''}`;
+  document.getElementById('dp-status').value = p.status || 'new';
+  document.getElementById('dp-notes').value = p.notes || '';
+
+  // Fields
+  const fields = [
+    ['Clinician', clinicianName(p.clinician)],
+    ['Email', p.email || '—'],
+    ['Phone', p.phone || '—'],
+    ['ID / DOB', p.idNumber || p.dob || '—'],
+    ['Medical Aid', p.medicalAid || '—'],
+    ['Submitted', formatDate(p.submitted)],
+  ];
+  document.getElementById('dp-fields').innerHTML = fields.map(([k,v])=>`
+    <div class="dp-field"><label>${k}</label><span>${v}</span></div>
+  `).join('');
+
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+  currentPatientId = null;
+}
+
+function updateStatus() {
+  if (!currentPatientId) return;
+  const p = patients.find(x=>x.id===currentPatientId);
+  if (p) { p.status = document.getElementById('dp-status').value; savePatients(); renderStats(); renderRecentTable(); filterPatients(); }
+}
+
+function saveNote() {
+  if (!currentPatientId) return;
+  const p = patients.find(x=>x.id===currentPatientId);
+  if (p) { p.notes = document.getElementById('dp-notes').value; savePatients(); }
+}
+
+function approvePatient() {
+  if (!currentPatientId) return;
+  const p = patients.find(x=>x.id===currentPatientId);
+  if (p) { p.status='approved'; document.getElementById('dp-status').value='approved'; savePatients(); renderStats(); renderRecentTable(); filterPatients(); showToast('Patient approved'); }
+}
+
+function markBooked() {
+  if (!currentPatientId) return;
+  const p = patients.find(x=>x.id===currentPatientId);
+  if (p) { p.status='booked'; document.getElementById('dp-status').value='booked'; savePatients(); renderStats(); renderRecentTable(); filterPatients(); showToast('Marked as booked'); }
+}
+
+function declinePatient() {
+  if (!currentPatientId) return;
+  if (!confirm('Decline this patient?')) return;
+  const p = patients.find(x=>x.id===currentPatientId);
+  if (p) { p.status='declined'; document.getElementById('dp-status').value='declined'; savePatients(); renderStats(); renderRecentTable(); filterPatients(); showToast('Patient declined'); closePanel(); }
+}
+
+function confirmDeletePatient() {
+  if (!currentPatientId) return;
+  const p = patients.find(x=>x.id===currentPatientId);
+  if (!p) return;
+  document.getElementById('delete-modal-name').textContent = `${p.firstName} ${p.lastName}`;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+function closeDeleteModal() {
+  document.getElementById('delete-modal').classList.remove('open');
+}
+
+function executeDeletePatient() {
+  if (!currentPatientId) return;
+  const p = patients.find(x=>x.id===currentPatientId);
+  if (!p) return;
+
+  // Archive: move to separate archived key
+  const archiveKey = `xeqt_archived_patients_${practice.slug}`;
+  const archived = JSON.parse(localStorage.getItem(archiveKey) || '[]');
+  archived.push({ ...p, archivedAt: new Date().toISOString(), archivedReason: 'deleted_by_admin' });
+  localStorage.setItem(archiveKey, JSON.stringify(archived));
+
+  // Remove from active patients
+  patients = patients.filter(x=>x.id!==currentPatientId);
+  savePatients();
+
+  closeDeleteModal();
+  closePanel();
+  renderStats();
+  renderRecentTable();
+  filterPatients();
+  showToast(`${p.firstName} ${p.lastName} archived`);
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────
+function switchScreen(name, btn) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  const titles = {overview:'Overview',patients:'Patients',clinicians:'Clinicians',settings:'Settings'};
+  document.getElementById('topbar-title').textContent = titles[name]||name;
+  if (name==='patients') { filterPatients(); }
+}
+
+// ── AUTH ──────────────────────────────────────────────────────────────────
+function logout() {
+  sessionStorage.removeItem('xeqt_session');
+  window.location.href = '../../index.html';
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.textContent = msg;
+  Object.assign(t.style, {
+    position:'fixed',bottom:'24px',left:'50%',transform:'translateX(-50%)',
+    background:'var(--gold)',color:'var(--ink)',padding:'10px 20px',borderRadius:'50px',
+    fontSize:'13px',fontWeight:'600',zIndex:'9999',
+    animation:'fadein .2s ease',letterSpacing:'.04em',
+    boxShadow:'0 8px 24px rgba(184,147,90,.4)'
+  });
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2500);
+}
+
+// ── START ─────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

@@ -2,9 +2,11 @@
  * XEQT Practice Platform — Cloudflare Pages Middleware
  *
  * Handles subdomain routing for *.xeqt.co.za:
- *   xeqt.co.za            → marketing site (practicemanager/)
+ *   pm.xeqt.co.za         → practice manager portal and login
  *   admin.xeqt.co.za      → super admin panel
  *   {slug}.xeqt.co.za     → patient intake for that practice
+ *
+ * xeqt.co.za (apex) is hosted separately and is NOT served by this project.
  *
  * Deployed as a Cloudflare Pages Function (_middleware.js at root of /functions)
  */
@@ -27,9 +29,17 @@ export async function onRequest(context) {
   const isApex = parts.length <= 3; // xeqt.co.za has 3 parts
   const subdomain = isApex ? null : parts[0];
 
-  // ── Apex domain → serve marketing site ───────────────────────────────
+  // ── Apex domain → not served here, xeqt.co.za is a separate site ─────
   if (!subdomain || subdomain === 'www') {
-    return next();
+    return new Response(null, { status: 404 });
+  }
+
+  // ── pm subdomain → practice manager portal ───────────────────────────
+  if (subdomain === 'pm') {
+    const pmUrl = new URL(url);
+    pmUrl.pathname = '/practicemanager/index.html';
+    const rewritten = new Request(pmUrl.toString(), request);
+    return next(rewritten);
   }
 
   // ── admin subdomain → super admin panel ──────────────────────────────
